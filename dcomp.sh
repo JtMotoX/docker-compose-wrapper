@@ -13,6 +13,7 @@ usage() {
 	printf "\trestart\n"
 	printf "\tbuild\n"
 	printf "\tstatus\n"
+	printf "\tlogs\n"
 	printf "\tbash\n"
 	printf "Supported flags:\n"
 	printf "\t-d (do not tail logs)\n"
@@ -83,6 +84,12 @@ if [[ "$CMD" == "status" ]] || [[ "$CMD" == "ps" ]]; then
 		echo -e "$status"
 	fi
 	exit 0
+fi
+
+# LOGS
+if [[ "$CMD" == "log" ]] || [[ "$CMD" == "logs" ]]; then
+        docker-compose logs -f
+        exit 0
 fi
 
 # BASH
