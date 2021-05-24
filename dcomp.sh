@@ -93,7 +93,7 @@ if [[ "$CMD" == "log" ]] || [[ "$CMD" == "logs" ]]; then
 fi
 
 # BASH
-if [[ "$CMD" == "bash" ]] || [[ "$CMD" == "sh" ]]; then
+if [[ "$CMD" == "bash" ]] || [[ "$CMD" == "sh" ]] || [[ "$CMD" == "ash" ]]; then
 	status=`docker-compose ps`
 	running_count=`echo -e "$status" | wc -l`
 	if [[ $running_count < 3 ]]; then
