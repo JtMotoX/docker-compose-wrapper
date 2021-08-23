@@ -65,6 +65,7 @@ fi
 
 # BUILD
 if [[ "$CMD" == "build" ]] || [[ "$CMD" == "rebuild" ]]; then
+	set -e
 	docker-compose up -d --build
 	docker-compose down 2>&1 | grep -v 'Network.*not found\.$'
 	docker-compose up -d
@@ -74,7 +75,7 @@ if [[ "$CMD" == "build" ]] || [[ "$CMD" == "rebuild" ]]; then
 	exit 0
 fi
 
-# BUILD
+# STATUS
 if [[ "$CMD" == "status" ]] || [[ "$CMD" == "ps" ]]; then
 	status=`docker-compose ps`
 	running_count=`echo -e "$status" | wc -l`
