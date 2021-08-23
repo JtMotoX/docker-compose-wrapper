@@ -66,7 +66,7 @@ fi
 # BUILD
 if [[ "$CMD" == "build" ]] || [[ "$CMD" == "rebuild" ]]; then
 	set -e
-	docker-compose up -d --build
+	docker-compose build
 	docker-compose down 2>&1 | grep -v 'Network.*not found\.$'
 	docker-compose up -d
 	if [ ! $BACKGROUND ]; then
