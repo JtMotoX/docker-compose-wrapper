@@ -94,13 +94,13 @@ if [[ "$CMD" == "log" ]] || [[ "$CMD" == "logs" ]]; then
 fi
 
 # BASH
-if [[ "$CMD" == "bash" ]] || [[ "$CMD" == "sh" ]]; then
-	container_status=`docker-compose ps`
+if [[ "$CMD" == "bash" ]] || [[ "$CMD" == "sh" ]] || [[ "$CMD" == "ash" ]]; then
+	container_status=`docker-compose ps | sed 's/^\s*Name\s.*$//' | sed 's/^-*$//' | sed -r '/^\s*$/d'`
 	running_count=`echo -e "$container_status" | wc -l`
-	if [ $running_count -lt 3 ]; then
+	if [ $running_count -eq 0 ]; then
 		echo "No Running Containers"
 	else
-		container=`echo -e "$container_status" | grep -v 'db\|sql\|mariadb' | sed -n 2p | awk '{print $1}'`
+		container=`echo -e "$container_status" | grep -v 'db\|sql\|mariadb' | awk '{print $1}'`
 		echo "Entering $container"
 		docker exec -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -it $container "$CMD"
 	fi
