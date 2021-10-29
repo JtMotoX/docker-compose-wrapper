@@ -77,12 +77,12 @@ fi
 
 # STATUS
 if [[ "$CMD" == "status" ]] || [[ "$CMD" == "ps" ]]; then
-	status=`docker-compose ps`
-	running_count=`echo -e "$status" | wc -l`
-	if [[ $running_count < 3 ]]; then
+	container_status=`docker-compose ps`
+	running_count=`echo -e "$container_status" | wc -l`
+	if [ $running_count -lt 3 ]; then
 		echo "No Running Containers"
 	else
-		echo -e "$status"
+		echo -e "$container_status"
 	fi
 	exit 0
 fi
