@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# CHECK IF DOCKER-COMPOSE IS INSTALLED
+if ! type docker-compose &>/dev/null; then
+	if type nerdctl &>/dev/null; then
+		function docker-compose() { nerdctl compose "$@"; }
+	else
+		echo "docker-compose not found"
+		exit 1
+	fi
+fi
+
 # MAKE SURE THIS IS A DOCKER DIRECTORY
 docker-compose ps >/dev/null
 if [[ $? -ne 0 ]]; then
