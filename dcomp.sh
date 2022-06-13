@@ -14,7 +14,7 @@ usage() {
 	printf "\tbuild\n"
 	printf "\tstatus\n"
 	printf "\tlogs\n"
-	printf "\tbash\n"
+	printf "\tbash|ash|sh\n"
 	printf "Supported flags:\n"
 	printf "\t-d (do not tail logs)\n"
 }
@@ -23,90 +23,91 @@ usage() {
 CMD=$1
 shift
 
+# SETS SOME DEFAULT VARIABLES
+BACKGROUND=false
+
 # GET ARGUMENTS
 while [ "$1" != "" ]; do
 	case $1 in
-		-d )					BACKGROUND=true
-								;;
-		-h | --help )			usage
-								exit
-								;;
-		* )						echo "Unknown flag: '$1'"
-								usage
-								exit 1
+		-d )
+			BACKGROUND=true
+			;;
+		-h | --help )
+			usage
+			exit
+			;;
+		* )
+			echo "Unknown flag: '$1'"
+			usage
+			exit 1
 	esac
 	shift
 done
 
+build() { docker-compose build; }
+stop() { docker-compose down 2>&1 | grep -v 'Network.*not found\.$'; }
+start() { docker-compose up -d; }
+logs() { docker-compose logs -f; }
+status() { docker-compose ps | grep -v -E '^\s*Name\s.*' | grep -v -E '^-*$' | grep -v '^\s*$'; }
+
 # RESTART
-if [[ "$CMD" == "restart" ]]; then
-	docker-compose down 2>&1 | grep -v 'Network.*not found\.$'
-	docker-compose up -d
-	if [ ! $BACKGROUND ]; then
-		docker-compose logs -f
-	fi
+if [[ "${CMD}" == "restart" ]]; then
+	stop
+	start
+	[ "${BACKGROUND}" = "false" ] && logs
 	exit 0
 fi
 
 # STOP
-if [[ "$CMD" == "stop" ]] || [[ "$CMD" == "down" ]]; then
-	docker-compose down 2>&1 | grep -v 'Network.*not found\.$'
+if [[ "${CMD}" == "stop" ]] || [[ "${CMD}" == "down" ]]; then
+	stop
 	exit 0
 fi
 
 # START
-if [[ "$CMD" == "start" ]] || [[ "$CMD" == "up" ]]; then
-	docker-compose up -d
-	if [ ! $BACKGROUND ]; then
-		docker-compose logs -f
-	fi
+if [[ "${CMD}" == "start" ]] || [[ "${CMD}" == "up" ]]; then
+	start
+	[ "${BACKGROUND}" = "false" ] && logs
 	exit 0
 fi
 
 # BUILD
-if [[ "$CMD" == "build" ]] || [[ "$CMD" == "rebuild" ]]; then
+if [[ "${CMD}" == "build" ]] || [[ "${CMD}" == "rebuild" ]]; then
 	set -e
-	docker-compose build
-	docker-compose down 2>&1 | grep -v 'Network.*not found\.$'
-	docker-compose up -d
-	if [ ! $BACKGROUND ]; then
-		docker-compose logs -f
-	fi
+	build
+	stop
+	start
+	[ "${BACKGROUND}" = "false" ] && logs
 	exit 0
 fi
 
 # STATUS
-if [[ "$CMD" == "status" ]] || [[ "$CMD" == "ps" ]]; then
-	container_status=`docker-compose ps`
-	running_count=`echo -e "$container_status" | wc -l`
-	if [ $running_count -lt 3 ]; then
-		echo "No Running Containers"
-	else
-		echo -e "$container_status"
-	fi
+if [[ "${CMD}" == "status" ]] || [[ "${CMD}" == "ps" ]]; then
+	container_status="$(status)"
+	[ "${container_status}" = "" ] && { echo "No Running Containers"; exit 0; }
+	echo "${container_status}"
 	exit 0
 fi
 
 # LOGS
-if [[ "$CMD" == "log" ]] || [[ "$CMD" == "logs" ]]; then
-        docker-compose logs -f
-        exit 0
+if [[ "${CMD}" == "log" ]] || [[ "${CMD}" == "logs" ]]; then
+	logs
+	exit 0
 fi
 
 # BASH
-if [[ "$CMD" == "bash" ]] || [[ "$CMD" == "sh" ]] || [[ "$CMD" == "ash" ]]; then
-	container_status=`docker-compose ps | sed 's/^\s*Name\s.*$//' | sed 's/^-*$//' | sed -r '/^\s*$/d'`
-	running_count=`echo -e "$container_status" | wc -l`
-	if [ $running_count -eq 0 ]; then
-		echo "No Running Containers"
-	else
-		container=`echo -e "$container_status" | grep -v 'db\|sql\|mariadb' | awk '{print $1}'`
-		echo "Entering $container"
-		docker exec -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -it $container "$CMD"
+if [[ "${CMD}" == "bash" ]] || [[ "${CMD}" == "sh" ]] || [[ "${CMD}" == "ash" ]]; then
+	container_list=$(status | grep 'Up' | awk '{print $1}' )
+	[ "${container_list}" = "" ] && { echo "No Running Containers"; exit 0; }
+	if [ $(echo "${container_list}" | wc -l) -gt 1 ]; then
+		container_list=$(echo "${container_list}" | grep -v -E 'database|db|sql')
 	fi
+	container=$(echo "${container_list}" | head -n1)
+	echo "Entering ${container}"
+	docker exec -e COLUMNS="$(tput cols)" -e LINES="$(tput lines)" -it ${container} "${CMD}"
 	exit 0
 fi
 
 
-echo "Unknown argument '$CMD'"
+echo "Unknown argument '${CMD}'"
 usage
