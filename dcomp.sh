@@ -35,12 +35,16 @@ shift
 
 # SETS SOME DEFAULT VARIABLES
 BACKGROUND=false
+PULL=false
 
 # GET ARGUMENTS
 while [ "$1" != "" ]; do
 	case $1 in
 		-d )
 			BACKGROUND=true
+			;;
+		-p | --pull)
+			PULL=true
 			;;
 		-h | --help )
 			usage
@@ -54,7 +58,7 @@ while [ "$1" != "" ]; do
 	shift
 done
 
-build() { docker-compose build; }
+build() { docker-compose build $1; }
 stop() { docker-compose down 2>&1 | grep -v 'Network.*not found\.$'; }
 start() { docker-compose up -d; }
 logs() { docker-compose logs -f; }
@@ -84,7 +88,9 @@ fi
 # BUILD
 if [[ "${CMD}" == "build" ]] || [[ "${CMD}" == "rebuild" ]]; then
 	set -e
-	build
+	BUILD_ARGS=""
+	[ "${PULL}" = "true" ] && BUILD_ARGS=" --pull"
+	build ${BUILD_ARGS}
 	stop
 	start
 	[ "${BACKGROUND}" = "false" ] && logs
