@@ -33,7 +33,8 @@ shift
 if [ "${CMD}" != "update" ]; then
 	# MAKE SURE THIS IS A DOCKER DIRECTORY
 	docker-compose ps >/dev/null
-	if [[ $? -ne 0 ]]; then
+	if [ "$?" -ne 0 ]; then
+		echo "does not seem to be a docker-compose.yml in this directory"
 		exit 1
 	fi
 fi
