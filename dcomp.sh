@@ -19,14 +19,17 @@ fi
 usage() {
 	printf "Supported commands:\n"
 	printf "\tstart|up\n"
+	printf "\t\t-d (do not tail logs)\n"
 	printf "\tstop|down\n"
 	printf "\trestart\n"
+	printf "\t\t-d (do not tail logs)\n"
 	printf "\tbuild\n"
+	printf "\t\t-p|--pull (pull image)\n"
+	printf "\t\t-d (do not tail logs)\n"
 	printf "\tstatus\n"
 	printf "\tlogs\n"
 	printf "\tbash|ash|sh\n"
-	printf "Supported flags:\n"
-	printf "\t-d (do not tail logs)\n"
+	printf "\tupdate\n"
 }
 
 # GETS COMMAND ARGUMENT
@@ -122,6 +125,32 @@ if [[ "${CMD}" == "bash" ]] || [[ "${CMD}" == "sh" ]] || [[ "${CMD}" == "ash" ]]
 	exit 0
 fi
 
+if [ "${CMD}" = "update" ]; then
+	DCOMP_EXECUTABLE_PATH="$(which dcomp)"
+	if [ "${DCOMP_EXECUTABLE_PATH}" = "" ]; then echo "which dcomp: not found"; exit 1; fi
+	DCOMP_REAL_PATH="$(ls -l ${DCOMP_EXECUTABLE_PATH} | awk '{print $NF}')"
+	if [ ! -f "${DCOMP_REAL_PATH}" ]; then echo "dcomp file not found: '${DCOMP_REAL_PATH}'"; exit 1; fi
+	DCOMP_REAL_DIR="$(dirname "${DCOMP_REAL_PATH}")"
+	if [ ! -d "${DCOMP_REAL_DIR}" ]; then echo "dcomp directory not found: '${DCOMP_REAL_DIR}'"; exit 1; fi
+	cd "${DCOMP_REAL_DIR}"
+	SUDO_PREFIX=""
+	if ! git status >/dev/null 2>/tmp/dcomp-update.log; then
+		if cat /tmp/dcomp-update.log | grep 'detected dubious ownership' >/dev/null; then
+			SUDO_PREFIX="sudo"
+		else
+			cat /tmp/dcomp-update.log
+			exit 1
+		fi
+	fi
+	LATEST_COMMIT_BEFORE="$(${SUDO_PREFIX} git log -1 --format=%cd)"
+	if ! ${SUDO_PREFIX} git pull; then
+		echo "There was an error updating"
+		exit 1
+	fi
+	printf "BEFORE:\t${LATEST_COMMIT_BEFORE}\n"
+	printf "AFTER:\t${LATEST_COMMIT_BEFORE}\n"
+	exit 0
+fi
 
 echo "Unknown argument '${CMD}'"
 usage
