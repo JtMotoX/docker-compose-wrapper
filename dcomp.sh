@@ -62,7 +62,7 @@ build() { docker-compose build $1; }
 stop() { docker-compose down 2>&1 | grep -v 'Network.*not found\.$'; }
 start() { docker-compose up -d; }
 logs() { docker-compose logs -f; }
-status() { docker-compose ps | grep -v -E '^\s*Name\s.*' | grep -v -E '^-*$' | grep -v '^\s*$'; }
+status() { docker-compose ps | grep -v -i -E '^\s*Name\s.*' | grep -v -E '^-*$' | grep -v '^\s*$'; }
 
 # RESTART
 if [[ "${CMD}" == "restart" ]]; then
