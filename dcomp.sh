@@ -58,7 +58,7 @@ while [ "$1" != "" ]; do
 	shift
 done
 
-build() { docker-compose build $1; }
+build() { docker-compose up -d --build $1; }
 stop() { docker-compose down 2>&1 | grep -v 'Network.*not found\.$'; }
 start() { docker-compose up -d; }
 logs() { docker-compose logs -f; }
@@ -89,10 +89,8 @@ fi
 if [[ "${CMD}" == "build" ]] || [[ "${CMD}" == "rebuild" ]]; then
 	set -e
 	BUILD_ARGS=""
-	[ "${PULL}" = "true" ] && BUILD_ARGS=" --pull"
-	build ${BUILD_ARGS}
-	stop
-	start
+	[ "${PULL}" = "true" ] && BUILD_ARGS="${BUILD_ARGS} --pull always"
+	build "${BUILD_ARGS}"
 	[ "${BACKGROUND}" = "false" ] && logs
 	exit 0
 fi
@@ -113,7 +111,7 @@ fi
 
 # BASH
 if [[ "${CMD}" == "bash" ]] || [[ "${CMD}" == "sh" ]] || [[ "${CMD}" == "ash" ]]; then
-	container_list=$(status | grep 'Up' | awk '{print $1}' )
+	container_list=$(status | grep -i -E ' (Up|running) ' | awk '{print $1}' )
 	[ "${container_list}" = "" ] && { echo "No Running Containers"; exit 0; }
 	if [ $(echo "${container_list}" | wc -l) -gt 1 ]; then
 		container_list=$(echo "${container_list}" | grep -v -E 'database|db|sql')
