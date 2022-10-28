@@ -149,8 +149,9 @@ if [ "${CMD}" = "update" ]; then
 		echo "There was an error updating"
 		exit 1
 	fi
+	LATEST_COMMIT_AFTER="$(${SUDO_PREFIX} git log -1 --format=%cd)"
 	printf "BEFORE:\t${LATEST_COMMIT_BEFORE}\n"
-	printf "AFTER:\t${LATEST_COMMIT_BEFORE}\n"
+	printf "AFTER:\t${LATEST_COMMIT_AFTER}\n"
 	exit 0
 fi
 
