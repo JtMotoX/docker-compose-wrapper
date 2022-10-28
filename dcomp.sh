@@ -10,12 +10,6 @@ if ! type docker-compose &>/dev/null; then
 	fi
 fi
 
-# MAKE SURE THIS IS A DOCKER DIRECTORY
-docker-compose ps >/dev/null
-if [[ $? -ne 0 ]]; then
-	exit 1
-fi
-
 usage() {
 	printf "Supported commands:\n"
 	printf "\tstart|up\n"
@@ -35,6 +29,14 @@ usage() {
 # GETS COMMAND ARGUMENT
 CMD=$1
 shift
+
+if [ "${CMD}" != "update" ]; then
+	# MAKE SURE THIS IS A DOCKER DIRECTORY
+	docker-compose ps >/dev/null
+	if [[ $? -ne 0 ]]; then
+		exit 1
+	fi
+fi
 
 # SETS SOME DEFAULT VARIABLES
 BACKGROUND=false
